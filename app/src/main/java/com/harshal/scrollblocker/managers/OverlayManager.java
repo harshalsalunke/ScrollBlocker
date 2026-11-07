@@ -68,23 +68,17 @@ public class OverlayManager {
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.MATCH_PARENT,
                 WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
-                0,
+                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
+                        | WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
                 PixelFormat.TRANSLUCENT);
 
         delayOverlayView.setOnTouchListener((v, event) -> event.getY() >= 120);
-        delayOverlayView.setFocusableInTouchMode(true);
-        delayOverlayView.requestFocus();
-        delayOverlayView.setOnKeyListener((v, keyCode, event) -> {
-            if (keyCode == android.view.KeyEvent.KEYCODE_BACK && event.getAction() == android.view.KeyEvent.ACTION_UP) {
-                onNotNow.run();
-                return true;
-            }
-            return false;
-        });
 
         try {
             windowManager.addView(delayOverlayView, lp);
+            android.util.Log.d("OverlayManager", "Successfully added delay overlay view for " + appName);
         } catch (Exception e) {
+            android.util.Log.e("OverlayManager", "Failed to add delay overlay view", e);
             isShowingDelayOverlay = false;
             return;
         }
