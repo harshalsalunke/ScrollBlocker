@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">Scroll Blocker</string>
+    <string name="accessibility_description">Detects when Shorts or Reels screens open so Scroll Blocker can block them.</string>
+</resources>

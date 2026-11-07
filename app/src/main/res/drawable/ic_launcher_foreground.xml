@@ -1,0 +1,25 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Outer Track (Dark Gray/Black) -->
+    <path
+        android:strokeColor="#222222"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M54,26 A28,28 0 1 1 27.6,44.5" />
+
+    <!-- Progress Arc (Orange) -->
+    <path
+        android:strokeColor="#FA8A4D"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M27.6,44.5 A28,28 0 1 0 54,26" />
+
+    <!-- Center Dot (Orange) -->
+    <path
+        android:fillColor="#FA8A4D"
+        android:pathData="M54,54 m-5,0 a5,5 0 1,1 10,0 a5,5 0 1,1 -10,0" />
+</vector>

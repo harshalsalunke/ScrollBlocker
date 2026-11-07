@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Ember Dark Theme -->
+    <color name="bg_main">#111111</color>
+    <color name="bg_overlay">#111111</color>
+    <color name="bg_card">#1E1C1A</color>
+    <color name="line">#333333</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_muted">#AAAAAA</color>
+    <color name="text_dark">#000000</color>
+
+    <color name="accent">#FA8A4D</color>
+    <color name="on_accent">#000000</color>
+</resources>

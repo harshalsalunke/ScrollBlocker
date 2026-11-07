@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_overlay"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:id="@+id/tvOpeningApp"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/text_muted"
+        android:textSize="15sp"
+        tools:text="Opening YouTube" />
+
+    <FrameLayout
+        android:layout_width="180dp"
+        android:layout_height="180dp"
+        android:layout_marginTop="48dp"
+        android:layout_marginBottom="48dp">
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:indeterminate="false"
+            android:progressDrawable="@drawable/circular_progress" />
+
+        <TextView
+            android:id="@+id/tvSeconds"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:textColor="@color/accent"
+            android:textSize="72sp"
+            android:textStyle="bold"
+            tools:text="10" />
+    </FrameLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Take a breath"
+        android:textColor="@color/text_primary"
+        android:textSize="26sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/tvBody"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="48dp"
+        android:gravity="center"
+        android:textColor="@color/text_muted"
+        android:textSize="16sp"
+        tools:text="Do you still want to open YouTube right now?" />
+
+    <TextView
+        android:id="@+id/btnNotNow"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:background="@drawable/bg_btn_primary"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:text="Not now"
+        android:textColor="@color/text_dark"
+        android:textSize="16sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/btnOpenAnyway"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_btn_secondary"
+        android:clickable="true"
+        android:enabled="false"
+        android:focusable="true"
+        android:gravity="center"
+        android:textColor="@color/text_muted"
+        android:textSize="16sp"
+        tools:text="Open anyway in 7s" />
+
+</LinearLayout>
