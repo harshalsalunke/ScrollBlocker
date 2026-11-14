@@ -2,7 +2,9 @@ package com.harshal.scrollblocker;
 
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
+import android.os.PowerManager;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -56,6 +58,8 @@ public class MainActivity extends AppCompatActivity {
             activeStateContainer.setVisibility(View.VISIBLE);
             inactiveStateContainer.setVisibility(View.GONE);
             
+            checkBatteryOptimization();
+
             // Populate statistics
             AppPrefs prefs = new AppPrefs(this);
             int blockCount = prefs.getBlockCount();
@@ -222,6 +226,33 @@ public class MainActivity extends AppCompatActivity {
             })
             .setNegativeButton("Cancel", null)
             .show();
+    }
+
+    private void checkBatteryOptimization() {
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (pm != null && !pm.isIgnoringBatteryOptimizations(getPackageName())) {
+            AppPrefs prefs = new AppPrefs(this);
+            if (!prefs.hasPromptedBatteryOptimization()) {
+                new AlertDialog.Builder(this, R.style.ThemeOverlay_ScrollBlocker_AlertDialog)
+                    .setTitle("Ensure 100% Reliable Delays")
+                    .setMessage("Android's battery saver can put Scroll Blocker to sleep. To guarantee your delay screens always trigger on time, allow Scroll Blocker to run without battery optimization.")
+                    .setPositiveButton("Allow", (dialog, which) -> {
+                        prefs.setPromptedBatteryOptimization(true);
+                        try {
+                            Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+                            intent.setData(Uri.parse("package:" + getPackageName()));
+                            startActivity(intent);
+                        } catch (Exception e) {
+                            Intent intent = new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS);
+                            startActivity(intent);
+                        }
+                    })
+                    .setNegativeButton("Later", (dialog, which) -> {
+                        prefs.setPromptedBatteryOptimization(true);
+                    })
+                    .show();
+            }
+        }
     }
 
     public static boolean isAccessibilityServiceEnabled(Context context, Class<?> accessibilityService) {

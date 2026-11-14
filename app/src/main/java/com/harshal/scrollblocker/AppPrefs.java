@@ -102,6 +102,14 @@ public class AppPrefs {
         prefs.edit().putLong("shorts_time_" + pkg, clampedTimeMillis).commit(); // Synchronous commit to prevent rollbacks
     }
 
+    public boolean hasPromptedBatteryOptimization() {
+        return prefs.getBoolean("prompted_battery_opt", false);
+    }
+
+    public void setPromptedBatteryOptimization(boolean prompted) {
+        prefs.edit().putBoolean("prompted_battery_opt", prompted).apply();
+    }
+
     private void checkMidnightReset() {
         String today = new java.text.SimpleDateFormat("yyyy-MM-dd", java.util.Locale.getDefault())
                 .format(new java.util.Date());

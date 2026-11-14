@@ -7,7 +7,10 @@ import android.os.Looper;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.os.SystemClock;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.harshal.scrollblocker.managers.OverlayManager;
 import com.harshal.scrollblocker.managers.TimeManager;
@@ -25,12 +28,11 @@ public class ScrollBlockerService extends AccessibilityService {
     };
     private static final String INSTAGRAM_REELS_TAB = "com.instagram.android:id/clips_tab";
 
-    // private static final long BLOCK_COOLDOWN_MS = 2500;
-
     private final Handler handler = new Handler(Looper.getMainLooper());
-    // private long lastBlockTime = 0;
-    private boolean delayShownForCurrentSession = false;
-    private long lastYouTubeEventTime = 0;
+    private String lastMonitoredPackage = "";
+    private long lastMonitoredExitTimeRealtime = 0;
+    private final Map<String, Long> lastDelayShownTimeMap = new HashMap<>();
+    
     private boolean isInShortsOrReels = false;
     private boolean hasTriggeredBlock = false;
     
@@ -159,14 +161,6 @@ public class ScrollBlockerService extends AccessibilityService {
         boolean isYoutube = YOUTUBE_PKG.equals(pkg);
         boolean isInstagram = INSTAGRAM_PKG.equals(pkg);
         boolean isFacebook = FACEBOOK_PKG.equals(pkg);
-        
-        if (isYoutube || isInstagram || isFacebook) {
-            long now = System.currentTimeMillis();
-            if (now - lastYouTubeEventTime > 5000) {
-                delayShownForCurrentSession = false;
-            }
-            lastYouTubeEventTime = now;
-        }
 
         if (!isYoutube && !isInstagram && !isFacebook) {
              stopTrackingHelper();
@@ -347,29 +341,42 @@ public class ScrollBlockerService extends AccessibilityService {
         return false;
     }
 
-    // --- NEW DELAY LOGIC ---
+    // --- DELAY & SESSION LOGIC ---
 
     private void handleWindowStateChanged(String newPkg) {
         currentForegroundPackage = newPkg;
         boolean isMonitored = YOUTUBE_PKG.equals(newPkg) || INSTAGRAM_PKG.equals(newPkg) || FACEBOOK_PKG.equals(newPkg);
 
         if (!isMonitored) {
-            if (delayShownForCurrentSession) {
-                delayShownForCurrentSession = false;
-                Log.d(TAG, "Left monitored app. Reset delayShownForCurrentSession to false.");
-            }
             if (!newPkg.equals(getPackageName())
                     && !newPkg.equals("com.android.systemui")
                     && !newPkg.contains("inputmethod")
                     && !newPkg.equals("com.google.android.permissioncontroller")) {
+                
+                if (!lastMonitoredPackage.isEmpty()) {
+                    Log.d(TAG, "Left monitored app (" + lastMonitoredPackage + "). Updating exit timestamp.");
+                    lastMonitoredExitTimeRealtime = SystemClock.elapsedRealtime();
+                    lastMonitoredPackage = "";
+                }
                 timeManager.clearGracePeriods();
             }
         } else {
-            if (!delayShownForCurrentSession) {
-                delayShownForCurrentSession = true;
+            long now = SystemClock.elapsedRealtime();
+            long exitDuration = now - lastMonitoredExitTimeRealtime;
+            Long val = lastDelayShownTimeMap.get(newPkg);
+            long lastDelayShown = val != null ? val : 0L;
+            long timeSinceLastDelay = now - lastDelayShown;
+
+            // Trigger delay if:
+            // 1. Switched from a different app or launcher (exitDuration > 1500ms or lastMonitoredPackage wasn't this app)
+            // 2. OR it has been > 30 seconds since delay was last shown AND user is not in a valid grace period
+            boolean isNewSession = !newPkg.equals(lastMonitoredPackage) || exitDuration > 1500;
+
+            if (isNewSession || (timeSinceLastDelay > 30000 && !timeManager.isInsideGracePeriod(newPkg))) {
+                lastMonitoredPackage = newPkg;
                 checkAndShowDelayOverlay(newPkg);
             } else {
-                Log.d(TAG, "IGNORED delay check - session already active for " + newPkg);
+                Log.d(TAG, "Session active for " + newPkg + " (exitDuration=" + exitDuration + "ms, timeSinceLastDelay=" + timeSinceLastDelay + "ms)");
             }
         }
     }
@@ -380,24 +387,29 @@ public class ScrollBlockerService extends AccessibilityService {
         Log.d(TAG, "Checking delay for " + pkg);
 
         if (timeManager.isInsideGracePeriod(pkg)) {
-            Log.d(TAG, "Inside grace period. Bypassing delay.");
-            return; // Currently inside the grace period
+            Log.d(TAG, "Inside grace period for " + pkg + ". Bypassing delay.");
+            return;
         }
+
+        if (overlayManager.isShowingDelayOverlay()) {
+            Log.d(TAG, "Delay overlay already showing.");
+            return;
+        }
+
+        // Record timestamp of showing delay overlay
+        lastDelayShownTimeMap.put(pkg, SystemClock.elapsedRealtime());
 
         final String appName = YOUTUBE_PKG.equals(pkg) ? "YouTube" : (INSTAGRAM_PKG.equals(pkg) ? "Instagram" : "Facebook");
 
         Log.d(TAG, "SHOWING delay overlay for " + appName);
         overlayManager.showDelayOverlay(appName, appPrefs.getDelaySeconds(pkg), 
             () -> { // onNotNow
-                Log.d(TAG, "User clicked 'Not now' on " + appName + " - performing GLOBAL_ACTION_BACK with 500ms debounce");
+                Log.d(TAG, "User clicked 'Not now' on " + appName + " - performing GLOBAL_ACTION_BACK");
                 overlayManager.hideDelayOverlay();
                 timeManager.clearGracePeriods();
+                lastMonitoredExitTimeRealtime = SystemClock.elapsedRealtime();
+                lastMonitoredPackage = "";
                 performGlobalAction(GLOBAL_ACTION_BACK);
-                
-                handler.postDelayed(() -> {
-                    delayShownForCurrentSession = false;
-                    Log.d(TAG, "500ms exit debounce finished. Reset delayShownForCurrentSession to false.");
-                }, 500);
             },
             () -> { // onOpenAnyway
                 Log.d(TAG, "User clicked 'Open anyway' on " + appName + " - granting grace period");
