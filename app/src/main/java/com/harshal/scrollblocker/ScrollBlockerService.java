@@ -358,7 +358,6 @@ public class ScrollBlockerService extends AccessibilityService {
                     lastMonitoredExitTimeRealtime = SystemClock.elapsedRealtime();
                     lastMonitoredPackage = "";
                 }
-                timeManager.clearGracePeriods();
             }
         } else {
             long now = SystemClock.elapsedRealtime();
@@ -367,12 +366,19 @@ public class ScrollBlockerService extends AccessibilityService {
             long lastDelayShown = val != null ? val : 0L;
             long timeSinceLastDelay = now - lastDelayShown;
 
+            // Check if user is inside an active grace period for this package
+            if (timeManager.isInsideGracePeriod(newPkg)) {
+                Log.d(TAG, "Inside grace period for " + newPkg + ". Bypassing delay.");
+                lastMonitoredPackage = newPkg;
+                return;
+            }
+
             // Trigger delay if:
             // 1. Switched from a different app or launcher (exitDuration > 1500ms or lastMonitoredPackage wasn't this app)
-            // 2. OR it has been > 30 seconds since delay was last shown AND user is not in a valid grace period
+            // 2. OR it has been > 30 seconds since delay was last shown
             boolean isNewSession = !newPkg.equals(lastMonitoredPackage) || exitDuration > 1500;
 
-            if (isNewSession || (timeSinceLastDelay > 30000 && !timeManager.isInsideGracePeriod(newPkg))) {
+            if (isNewSession || timeSinceLastDelay > 30000) {
                 lastMonitoredPackage = newPkg;
                 checkAndShowDelayOverlay(newPkg);
             } else {
