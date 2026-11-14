@@ -73,7 +73,11 @@ public class AppPrefs {
     }
 
     public int getGraceMinutes() {
-        return prefs.getInt("grace_minutes", 5);
+        return prefs.getInt("grace_minutes", 1);
+    }
+
+    public void setGraceMinutes(int minutes) {
+        prefs.edit().putInt("grace_minutes", minutes).apply();
     }
 
     public int getBlockCount() {
